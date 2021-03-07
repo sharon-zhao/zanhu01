@@ -1,45 +1,30 @@
-from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.messages.views import SuccessMessageMixin
-from django.urls import reverse
-from django.utils.translation import gettext_lazy as _
-from django.views.generic import DetailView, RedirectView, UpdateView
+#!/usr/bin/python3
+# -*- coding:utf-8 -*-
+# __author__ = '__Jack__'
 
-User = get_user_model()
+from django.urls import reverse
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import DetailView, UpdateView
+
+from zanhu01.users.models import User
 
 
 class UserDetailView(LoginRequiredMixin, DetailView):
-
     model = User
-    slug_field = "username"
-    slug_url_kwarg = "username"
+    template_name = 'users/user_detail.html'
+    slug_field = 'username'
+    slug_url_kwarg = 'username'
 
-
-user_detail_view = UserDetailView.as_view()
-
-
-class UserUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
-
+class UserUpdateView(LoginRequiredMixin, UpdateView):
+    """用户只能更新自己的信息"""
+    fields = ['nickname', 'email', 'picture', 'introduction', 'job_title', 'location',
+              'personal_url', 'weibo', 'zhihu', 'github', 'linkedin']
     model = User
-    fields = ["name"]
-    success_message = _("Information successfully updated")
+    template_name = 'users/user_form.html'
 
     def get_success_url(self):
-        return reverse("users:detail", kwargs={"username": self.request.user.username})
+        """更新成功后跳转到用户自己页面"""
+        return reverse('users:detail', kwargs={'username': self.request.user.username})
 
-    def get_object(self):
+    def get_object(self, queryset=None):
         return self.request.user
-
-
-user_update_view = UserUpdateView.as_view()
-
-
-class UserRedirectView(LoginRequiredMixin, RedirectView):
-
-    permanent = False
-
-    def get_redirect_url(self):
-        return reverse("users:detail", kwargs={"username": self.request.user.username})
-
-
-user_redirect_view = UserRedirectView.as_view()
